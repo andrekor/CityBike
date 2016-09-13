@@ -3,8 +3,8 @@ library(ggplot2)
 library(ggvis)
 library(lubridate)
 
-source("Documents/CityBike/weather.R")
-source("Documents/CityBike/bysykkelDataFiltering.R")
+source("Documents/CityBike/CityBike/weather.R")
+source("Documents/CityBike/CityBike/bysykkelDataFiltering.R")
 
 
 #Make station and rack data ready for analysis
