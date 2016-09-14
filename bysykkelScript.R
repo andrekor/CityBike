@@ -9,7 +9,7 @@ source("Documents/CityBike/CityBike/bysykkelDataFiltering.R")
 
 #Make station and rack data ready for analysis
 #The data must be put into one folder containting only this
-station_data <- stationFunction("Bysykkel/station.json")
+station_data <- stationFunction("Bysykkel/station.json") #should use the latest version, or make a table over time
 availabilityData <- readBysykkelFiles("Downloads/data/availability/")
 
 #Make weather data ready
@@ -21,6 +21,13 @@ weather$timeStamp <- as.POSIXct(weather$timeStamp, format="%Y-%m-%dT%H:%M:%SZ")
 descriptionData <- merge(availabilityData, station_data$stations[c("id", "title")], by="id")
 
 #Need to make a function to fill in the temperature to nearest hour for the descriptionData
+names(descriptionData)
+
+#Create target values. Optimal target : 50% ([20-50], [50-20])
+descriptionData$target <- lapply(descriptionData$availabilityRate, generateIntervals) 
+
+head(descriptionData)
+
 
 
 #Test*************************************************

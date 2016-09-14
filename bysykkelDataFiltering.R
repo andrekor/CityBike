@@ -29,7 +29,32 @@ stationFunction <- function(path) {
   return (station_data)
 }
 
-
 roundTime <- function(timeStamp) {
   format(strptime(as.Date(timeStamp), "%Y-%m-%d")+round(as.numeric(timeStamp)), "%H:%M")
 }
+
+
+generateIntervals <- function(rate) {
+  if (is.na(rate)) {
+    return ("0")
+  }
+  if (rate < 0.1) {
+    return ("[0-10]")
+  } 
+  else if (rate < 0.2) {
+    return ("[10-20]")
+  }
+  else if (rate < 0.5) {
+    return ("[20-50]")
+  }
+  else if (rate < 0.8) {
+    return ("[50-80]")
+  }  
+  else if (rate < 0.9){
+    return ("[80-90]")
+  }
+  return ("[90-100]")
+}
+
+
+

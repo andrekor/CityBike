@@ -22,4 +22,3 @@ ggmap(map) +
     aes(x = 10.714784, y = 59.930603),
     data = gc, colour = "red", size = 2
 )
-## End(Not run)
