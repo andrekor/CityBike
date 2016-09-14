@@ -26,13 +26,17 @@ names(descriptionData)
 #Create target values. Optimal target : 50% ([20-50], [50-20])
 descriptionData$target <- lapply(descriptionData$availabilityRate, generateIntervals) 
 
-head(descriptionData)
+#maps the time to a value, for the predicitons (is this needed??)
+descriptionData$timeAsDecimal <- lapply(descriptionData$time, makeTimeAsDecimal)
 
+names(descriptionData)
 
 
 #Test*************************************************
 #Majorstua has id: 189. 
 majorstua <- availabilityData[availabilityData$id==189,]
+
+
 
 
 ggplot(data=majorstua[majorstua$weekday=="Monday",], aes_string(x="time", y="availabilityRate", fill=as.factor("weekDay"))) + geom_point(shape=1)

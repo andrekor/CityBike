@@ -56,5 +56,11 @@ generateIntervals <- function(rate) {
   return ("[90-100]")
 }
 
+makeTimeAsDecimal <- function(time) {
+  t.lub <- ymd_hms(time)
+  h.lub <- hour(t.lub) + minute(t.lub)/60
+  return(round(h.lub, digits = 2))
+}
+
 
 
