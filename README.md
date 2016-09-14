@@ -11,3 +11,22 @@ The cronjobs are as follows:
 
 0 * * * * cd ~/CityBike/script/ && ./weather.sh
 
+
+## Prediction
+There are multiple values to base the predictio of the availability for each rack. 
+From the weather data, we use:
+* temperature
+* cloudy/sun/rain/etc..
+
+From the bike api data, we use:
+* id - representing a unique rack
+* time - time of the sample
+* availabilityRate, calculated based on number of available bikes and locks
+
+From the station api data, we use:
+* the name of the rack ID, (not really needed for the prediction)
+
+When training the prediction model the target will be the availabilityRate. 
+
+Algorithms (to be defined):
+
