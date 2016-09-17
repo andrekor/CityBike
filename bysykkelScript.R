@@ -17,7 +17,9 @@ availabilityData <- availabilityData[!is.na(availabilityData$time) & !is.na(avai
 #Make weather data ready
 weather  <- readWeatherFiles("Downloads/data/weather/")
 weather$temperature <- as.double(levels(weather$temperature))[weather$temperature] #Converting from factor to double
+#weather$timeStamp <- as.POSIXct(weather$timeStamp, format="%Y-%m-%d %H:00")
 weather$timeStamp <- as.POSIXct(weather$timeStamp, format="%Y-%m-%dT%H:%M:%SZ")
+weather$dateTime <- format(weather$timeStamp, "%Y-%m-%d %H:00");
 
 #Merge the availability data with the station data for more description and info 
 descriptionData <- merge(availabilityData, station_data$stations[c("id", "title")], by="id")
@@ -40,7 +42,6 @@ getRackData <- function(completeData, id) {
 
 
 makeDataFrameForUniqueTime <- function(dataSet) {
-
   getMedian <- function(time) {
     return (median(dataSet$availabilityRate[dataSet$time==time]))  
   }
@@ -61,13 +62,22 @@ makeDataFrameForUniqueTime <- function(dataSet) {
 }
 
 
-makeProbability <- function(weekDay = "Monday", timeOfDay) {
+makeProbability <- function(weekDay = "Monday", timeOfDay = as.POSIXct("2016-08-19 16:10:01", format="%Y-%m-%d %H:%M")) {
+  timeOfDay <- as.POSIXct("2016-08-19 16:10:01", format="%Y-%m-%d %H:00")
+  weekDay <-  weekdays(timeOfDay)
+  d <- strftime(timeOfDay, format="%Y-%m-%d") #Target day 
+  t <- strftime(timeOfDay, format="%H:%M") #Target time
+
+  
   #Filter on the correct day
   dayData <- availabilityData[weekDay==weekdays(availabilityData$date),]
   #Gets the interesting fields
   dayData <- dayData[c("id", "availabilityRate", "time", "date")]
   dayData$time <- strftime(dayData$time, format="%H:%M")
-  
+  dayData$dateTime <- strftime(dayData$time, format="%Y-%m-%d %H:00")
+  dayData$nearestHour <- format(dayData$time, format = "%H:00")
+
+
   combineData <- function(id) {
     combined <- makeDataFrameForUniqueTime(getRackData(dayData, id))
     combined$id <- id
@@ -76,16 +86,19 @@ makeProbability <- function(weekDay = "Monday", timeOfDay) {
   
   ldf <- lapply(unique(dayData$id), combineData)
   aa <- rbind.fill(ldf)
+
+  completeDataSet <- merge(dayData, weather, by ="dateTime", all.x = TRUE)
   
-  maja <- getRackData(aa, 298)
-  nasjonal <- getRackData(aa, 202)
-  
-ggplot(data=aa, aes(x=time, y=meanAvailability, group=id, colour=as.factor(id))) +
+  #plot each of the stations
+  ggplot(data=aa, aes(x=time, y=meanAvailability, group=id, colour=as.factor(id))) +
     geom_line() +
     geom_point() + theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 11),
                          legend.position="bottom", legend.direction="vertical") 
   
 }
+
+
+
 
 ggplot(data=dayData, aes_string(x="time", y="availabilityRate", fill=factor("date"))) + 
   geom_point(shape=1) 
