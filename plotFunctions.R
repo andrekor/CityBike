@@ -5,9 +5,8 @@ library(RColorBrewer)
 #Plot the reports
 timePlot <- function(plotData, xVal, yVal, fillVal) {
   return (ggplot(data=plotData, aes(x=xVal, y=yVal, fill=fillVal))+
-            geom_bar(stat="identity") +
+            geom_line() +
             theme_bw() + ylab("# Reports") +
-            scale_x_date(breaks = date_breaks("1 month")) +
             theme(axis.text.x = element_text(angle = 30, hjust = 1),
                   legend.position="bottom", legend.direction="vertical"))
 }
@@ -42,6 +41,6 @@ heatPlot <- function(plotData, xVal, yVal, fillVal, lab=percent) {
   #plotData[[xVal]] <- as.factor(plotData[[xVal]])
   return(ggplot(plotData, aes_string(x=xVal, y=yVal, fill=fillVal)) + geom_tile(colour=bgcolor) + theme_bw() +
            theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.key.width=unit(1,"cm"), legend.box.just="left"))
-         
+}
          
          

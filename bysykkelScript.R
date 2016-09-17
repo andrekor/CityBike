@@ -2,6 +2,7 @@ library(jsonlite)
 library(ggplot2)
 library(ggvis)
 library(lubridate)
+library(plyr)
 
 source("Documents/CityBike/CityBike/weather.R")
 source("Documents/CityBike/CityBike/bysykkelDataFiltering.R")
@@ -11,6 +12,7 @@ source("Documents/CityBike/CityBike/bysykkelDataFiltering.R")
 #The data must be put into one folder containting only this
 station_data <- stationFunction("Bysykkel/station.json") #should use the latest version, or make a table over time
 availabilityData <- readBysykkelFiles("Downloads/data/availability/")
+availabilityData <- availabilityData[!is.na(availabilityData$time) & !is.na(availabilityData$availabilityRate),]
 
 #Make weather data ready
 weather  <- readWeatherFiles("Downloads/data/weather/")
@@ -27,19 +29,78 @@ names(descriptionData)
 descriptionData$target <- lapply(descriptionData$availabilityRate, generateIntervals) 
 
 #maps the time to a value, for the predicitons (is this needed??)
-descriptionData$timeAsDecimal <- lapply(descriptionData$time, makeTimeAsDecimal)
+#descriptionData$timeAsDecimal <- lapply(descriptionData$time, makeTimeAsDecimal)
 
 names(descriptionData)
+
+
+getRackData <- function(completeData, id) {
+  return (completeData[completeData$id==id,])
+}
+
+
+makeDataFrameForUniqueTime <- function(dataSet) {
+
+  getMedian <- function(time) {
+    return (median(dataSet$availabilityRate[dataSet$time==time]))  
+  }
+  
+  getStd <- function(time) {
+    return (sd(dataSet$availabilityRate[dataSet$time==time]))  
+  }
+  
+  getMean <- function(time) {
+    return (mean(dataSet$availabilityRate[dataSet$time==time]))  
+  }
+  
+  someDataFrame <- data.frame(time = unique(dataSet$time))
+  someDataFrame$medianAvailability <- as.numeric(lapply(someDataFrame$time, getMedian))
+  someDataFrame$standardDev <- as.numeric(lapply(someDataFrame$time, getStd))
+  someDataFrame$meanAvailability <- as.numeric(lapply(someDataFrame$time, getMean))
+  return(someDataFrame)
+}
+
+
+makeProbability <- function(weekDay = "Monday", timeOfDay) {
+  #Filter on the correct day
+  dayData <- availabilityData[weekDay==weekdays(availabilityData$date),]
+  #Gets the interesting fields
+  dayData <- dayData[c("id", "availabilityRate", "time", "date")]
+  dayData$time <- strftime(dayData$time, format="%H:%M")
+  
+  combineData <- function(id) {
+    combined <- makeDataFrameForUniqueTime(getRackData(dayData, id))
+    combined$id <- id
+    return (combined)
+  }
+  
+  ldf <- lapply(unique(dayData$id), combineData)
+  aa <- rbind.fill(ldf)
+  
+  maja <- getRackData(aa, 298)
+  nasjonal <- getRackData(aa, 202)
+  
+ggplot(data=aa, aes(x=time, y=meanAvailability, group=id, colour=as.factor(id))) +
+    geom_line() +
+    geom_point() + theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 11),
+                         legend.position="bottom", legend.direction="vertical") 
+  
+}
+
+ggplot(data=dayData, aes_string(x="time", y="availabilityRate", fill=factor("date"))) + 
+  geom_point(shape=1) 
+
 
 
 #Test*************************************************
 #Majorstua has id: 189. 
 majorstua <- availabilityData[availabilityData$id==189,]
 
+unique(majorstua$date)
+majorstua19 <- majorstua[majorstua$date==as.Date("2016-08-19"),]
+majorstua19 <- majorstua19[c("availabilityRate", "time")]
 
-
-
-ggplot(data=majorstua[majorstua$weekday=="Monday",], aes_string(x="time", y="availabilityRate", fill=as.factor("weekDay"))) + geom_point(shape=1)
+#ggplot(data=majorstua[majorstua$weekday=="Monday",], aes_string(x="time", y="availabilityRate", fill=as.factor("weekDay"))) + geom_point(shape=1)
 
 ggplot(data=availabilityData[availabilityData$id==189,], aes_string(x="time", y="availabilityRate", fill=factor("id"))) + 
   geom_point(shape=1) 
