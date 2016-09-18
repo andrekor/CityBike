@@ -58,24 +58,25 @@ makeDataFrameForUniqueTime <- function(dataSet) {
   someDataFrame$medianAvailability <- as.numeric(lapply(someDataFrame$time, getMedian))
   someDataFrame$standardDev <- as.numeric(lapply(someDataFrame$time, getStd))
   someDataFrame$meanAvailability <- as.numeric(lapply(someDataFrame$time, getMean))
+  someDataFrame$weekDay <- dataSet$weekDay[1]
   return(someDataFrame)
 }
 
 
-makeProbability <- function(weekDay = "Monday", timeOfDay = as.POSIXct("2016-08-19 16:10:01", format="%Y-%m-%d %H:%M")) {
+makeProbabilityDataSet <- function(weekDay = "Monday") {
   timeOfDay <- as.POSIXct("2016-08-19 16:10:01", format="%Y-%m-%d %H:00")
-  weekDay <-  weekdays(timeOfDay)
+  #weekDay <-  weekdays(timeOfDay)
   d <- strftime(timeOfDay, format="%Y-%m-%d") #Target day 
   t <- strftime(timeOfDay, format="%H:%M") #Target time
 
-  
   #Filter on the correct day
   dayData <- availabilityData[weekDay==weekdays(availabilityData$date),]
   #Gets the interesting fields
   dayData <- dayData[c("id", "availabilityRate", "time", "date")]
   dayData$time <- strftime(dayData$time, format="%H:%M")
-  dayData$dateTime <- strftime(dayData$time, format="%Y-%m-%d %H:00")
+  #dayData$dateTime <- strftime(dayData$time, format="%Y-%m-%d %H:00")
   dayData$nearestHour <- format(dayData$time, format = "%H:00")
+  dayData$weekDay <- weekDay
 
 
   combineData <- function(id) {
@@ -87,21 +88,35 @@ makeProbability <- function(weekDay = "Monday", timeOfDay = as.POSIXct("2016-08-
   ldf <- lapply(unique(dayData$id), combineData)
   aa <- rbind.fill(ldf)
 
-  completeDataSet <- merge(dayData, weather, by ="dateTime", all.x = TRUE)
-  
+  #completeDataSet <- merge(dayData, weather, by ="dateTime", all.x = TRUE)
+  return (aa)
+}
+
+plotSomething <- function(dataToPlot) {
   #plot each of the stations
-  ggplot(data=aa, aes(x=time, y=meanAvailability, group=id, colour=as.factor(id))) +
+  ggplot(data=dataToPlot, aes(x=time, y=meanAvailability, group=id, colour=as.factor(id))) +
     geom_line() +
     geom_point() + theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 11),
                          legend.position="bottom", legend.direction="vertical") 
+}
   
+
+combineAllDays <- function(){
+  allWeekdays <- c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
+  ldf <- lapply(allWeekdays, makeProbabilityDataSet)
+  totalDataSet <- rbind.fill(ldf)
+  return (totalDataSet)
 }
 
 
-
-
-ggplot(data=dayData, aes_string(x="time", y="availabilityRate", fill=factor("date"))) + 
-  geom_point(shape=1) 
+getProbability <- function() {
+  timeOfDay <- as.Date("2016-08-19 16:10:00")
+  t <- strftime(timeOfDay, format="%H:%M") #Target time
+  weekdays(timeOfDay)
+  a <- combineAllDays()
+  jsonFile <- toJSON(a, pretty=TRUE)
+  write(jsonFil, "test.json")
+}
 
 
 
